@@ -5,3 +5,6 @@ openai-whisper
 python-dotenv
 werkzeug
 torch
+google-genai
+imageio-ffmpeg
+numpy
