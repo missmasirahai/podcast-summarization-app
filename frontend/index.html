@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Podcast Summarizer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="container">
+
+    <div class="header">
+      <h1>🎙️ Podcast Summarizer</h1>
+      <p>Paste a transcript or upload an audio file to get an instant AI summary</p>
+    </div>
+
+    <!-- Tab Buttons -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('text')">📝 Paste Transcript</button>
+      <button class="tab-btn" onclick="switchTab('audio')">🎵 Upload Audio</button>
+    </div>
+
+    <!-- Text Tab -->
+    <div class="tab-content" id="text-tab">
+      <textarea id="transcript-input" placeholder="Paste your podcast transcript here..."></textarea>
+      <button class="submit-btn" onclick="summarizeText()">✨ Summarize Transcript</button>
+    </div>
+
+    <!-- Audio Tab -->
+    <div class="tab-content hidden" id="audio-tab">
+      <div class="upload-box" onclick="document.getElementById('audio-input').click()">
+        <p>🎵 Click to upload your audio file</p>
+        <p class="small">Supports mp3, wav, m4a</p>
+        <input type="file" id="audio-input" accept=".mp3,.wav,.m4a" onchange="showFileName()" hidden/>
+      </div>
+      <p id="file-name" class="file-name"></p>
+      <button class="submit-btn" onclick="summarizeAudio()">✨ Transcribe & Summarize</button>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading hidden" id="loading">
+      <div class="spinner"></div>
+      <p id="loading-text">Summarizing your podcast...</p>
+    </div>
+
+    <!-- Results -->
+    <div class="results hidden" id="results">
+
+      <div class="result-card">
+        <h2 id="result-title"></h2>
+        <span class="sentiment-badge" id="sentiment-badge"></span>
+      </div>
+
+      <div class="result-card">
+        <h3>📋 Summary</h3>
+        <p id="result-summary"></p>
+      </div>
+
+      <div class="result-card">
+        <h3>💡 Key Insights</h3>
+        <ul id="result-insights"></ul>
+      </div>
+
+      <div class="result-card">
+        <h3>💬 Top Quotes</h3>
+        <ul id="result-quotes"></ul>
+      </div>
+
+      <div class="result-card">
+        <h3>🏷️ Topics Covered</h3>
+        <div id="result-topics" class="topics-row"></div>
+      </div>
+
+      <!-- Show transcript if audio was used -->
+      <div class="result-card hidden" id="transcript-card">
+        <h3>📄 Full Transcript</h3>
+        <p id="result-transcript"></p>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    const API = "http://localhost:5000";
+
+    function switchTab(tab) {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-content").forEach(c => c.classList.add("hidden"));
+
+      if (tab === "text") {
+        document.getElementById("text-tab").classList.remove("hidden");
+        document.querySelectorAll(".tab-btn")[0].classList.add("active");
+      } else {
+        document.getElementById("audio-tab").classList.remove("hidden");
+        document.querySelectorAll(".tab-btn")[1].classList.add("active");
+      }
+
+      document.getElementById("results").classList.add("hidden");
+    }
+
+    function showFileName() {
+      const file = document.getElementById("audio-input").files[0];
+      if (file) {
+        document.getElementById("file-name").textContent = "Selected: " + file.name;
+      }
+    }
+
+    function showLoading(text) {
+      document.getElementById("loading-text").textContent = text;
+      document.getElementById("loading").classList.remove("hidden");
+      document.getElementById("results").classList.add("hidden");
+    }
+
+    function hideLoading() {
+      document.getElementById("loading").classList.add("hidden");
+    }
+
+    function displayResults(data, transcript = null) {
+      document.getElementById("result-title").textContent = data.title;
+      document.getElementById("result-summary").textContent = data.summary;
+
+      const badge = document.getElementById("sentiment-badge");
+      badge.textContent = data.sentiment;
+      badge.className = "sentiment-badge " + data.sentiment.toLowerCase();
+
+      const insights = document.getElementById("result-insights");
+      insights.innerHTML = "";
+      data.key_insights.forEach(i => {
+        const li = document.createElement("li");
+        li.textContent = i;
+        insights.appendChild(li);
+      });
+
+      const quotes = document.getElementById("result-quotes");
+      quotes.innerHTML = "";
+      data.top_quotes.forEach(q => {
+        const li = document.createElement("li");
+        li.textContent = "\"" + q + "\"";
+        quotes.appendChild(li);
+      });
+
+      const topics = document.getElementById("result-topics");
+      topics.innerHTML = "";
+      data.topics_covered.forEach(t => {
+        const span = document.createElement("span");
+        span.className = "topic-pill";
+        span.textContent = t;
+        topics.appendChild(span);
+      });
+
+      if (transcript) {
+        document.getElementById("transcript-card").classList.remove("hidden");
+        document.getElementById("result-transcript").textContent = transcript;
+      } else {
+        document.getElementById("transcript-card").classList.add("hidden");
+      }
+
+      document.getElementById("results").classList.remove("hidden");
+    }
+
+    async function summarizeText() {
+      const transcript = document.getElementById("transcript-input").value.trim();
+      if (!transcript) {
+        alert("Please paste a transcript first!");
+        return;
+      }
+
+      showLoading("Summarizing your podcast...");
+
+      try {
+        const response = await fetch(`${API}/summarize-text`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ transcript })
+        });
+
+        const result = await response.json();
+        hideLoading();
+
+        if (result.success) {
+          displayResults(result.data);
+        } else {
+          alert("Error: " + result.error);
+        }
+      } catch (err) {
+        hideLoading();
+        alert("Could not connect to server. Make sure Flask is running!");
+      }
+    }
+
+    async function summarizeAudio() {
+      const fileInput = document.getElementById("audio-input");
+      if (!fileInput.files[0]) {
+        alert("Please upload an audio file first!");
+        return;
+      }
+
+      showLoading("Transcribing audio... this may take a minute ⏳");
+
+      const formData = new FormData();
+      formData.append("audio", fileInput.files[0]);
+
+      try {
+        const response = await fetch(`${API}/summarize-audio`, {
+          method: "POST",
+          body: formData
+        });
+
+        const result = await response.json();
+        hideLoading();
+
+        if (result.success) {
+          displayResults(result.data, result.transcript);
+        } else {
+          alert("Error: " + result.error);
+        }
+      } catch (err) {
+        hideLoading();
+        alert("Could not connect to server. Make sure Flask is running!");
+      }
+    }
+  </script>
+
+</body>
+</html>

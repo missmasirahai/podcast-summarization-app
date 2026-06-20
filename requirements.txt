@@ -1,0 +1,7 @@
+flask
+flask-cors
+anthropic
+openai-whisper
+python-dotenv
+werkzeug
+torch
