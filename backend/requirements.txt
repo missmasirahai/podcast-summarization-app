@@ -5,5 +5,3 @@ werkzeug
 google-genai
 imageio-ffmpeg
 numpy
-openai-whisper
-torch

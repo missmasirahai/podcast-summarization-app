@@ -4,7 +4,11 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
 from summarizer import summarize_transcript
-from transcriber import transcribe_audio, cleanup_file
+try:
+    from transcriber import transcribe_audio, cleanup_file
+    WHISPER_AVAILABLE = True
+except Exception:
+    WHISPER_AVAILABLE = False
 from werkzeug.utils import secure_filename
 
 load_dotenv()
@@ -43,6 +47,9 @@ def summarize_text():
 # Route 2 — Summarize from uploaded audio file
 @app.route("/summarize-audio", methods=["POST"])
 def summarize_audio():
+    if not WHISPER_AVAILABLE:
+        return jsonify({"error": "Audio transcription is not available on this server. Please use the text paste option."}), 503
+
     try:
         if "audio" not in request.files:
             return jsonify({"error": "No audio file uploaded"}), 400
