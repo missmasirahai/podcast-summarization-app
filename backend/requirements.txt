@@ -1,0 +1,9 @@
+flask
+flask-cors
+python-dotenv
+werkzeug
+google-genai
+imageio-ffmpeg
+numpy
+openai-whisper
+torch
