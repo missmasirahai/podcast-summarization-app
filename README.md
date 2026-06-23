@@ -1,22 +1,28 @@
-# 🎙️ Podcast Summarization App
+# Podcast Summarization App
 
-An AI-powered podcast summarizer built with Flask, Google Gemini API, and OpenAI Whisper.
+A web app that transcribes audio from podcast URLs and generates 
+AI-powered summaries using OpenAI Whisper and Gemini API.
 
-## Features
-- Paste any podcast transcript and get an instant AI summary
-- Upload audio files (.mp3, .wav, .m4a) for automatic transcription
-- Structured output: summary, key insights, top quotes, topics covered
-- Sentiment analysis for each episode
+## Live Demo
+[Click here to try the app](https://podcast-summarization-app.vercel.app)
 
 ## Tech Stack
-- Backend: Python, Flask
-- AI Summarization: Google Gemini API
-- Audio Transcription: OpenAI Whisper
-- Frontend: HTML, CSS, Vanilla JavaScript
+- Python, Flask (backend)
+- OpenAI Whisper (audio transcription)
+- Google Gemini API (summarization)
+- HTML, CSS, JavaScript (frontend)
+- Deployed on Render + Vercel
+
+## Features
+- Paste any podcast URL
+- Get full transcript
+- Get a clean AI summary in seconds
 
 ## How to Run Locally
-1. Clone the repo
-2. Install dependencies: `pip install -r requirements.txt`
+1. Clone this repo
+2. pip install -r requirements.txt
+3. Add GEMINI_API_KEY to .env file
+4. python app.py
 3. Add your Gemini API key to `backend/.env`
 4. Run: `python backend/app.py`
 5. Open `frontend/index.html` in browser
